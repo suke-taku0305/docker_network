@@ -1,0 +1,139 @@
+nodes:
+        - name: router1
+          image: slankdev/frr
+          interfaces:
+                  - { name: net0, type: direct, args: hostA#net0}
+                  - { name: net1, type: direct, args: router2#net0}
+        - name: router2
+          image: slankdev/frr
+          interfaces:
+                  - { name: net0, type: direct, args: router1#net1 }
+                  - { name: net1, type: direct, args: router3#net0 }
+        - name: router3
+          image: slankdev/frr
+          interfaces:
+                  - { name: net0, type: direct, args: router2#net1 }
+                  - { name: net1, type: direct, args: hostB#net0 }
+        - name: hostA
+          image: slankdev/frr
+          interfaces:
+                  - { name: net0, type: direct, args: router1#net0 }
+        - name: hostB
+          image: slankdev/frr
+          interfaces:
+                  - { name: net0, type: direct, args: router3#net1 }
+node_configs:
+        - name: router1
+          cmds:
+                  - cmd: ip addr add 10.1.1.2/24 dev net0
+                  - cmd: ip addr add 10.1.2.1/24 dev net1
+                  - cmd: sysctl -w 'net.ipv4.ip_forward=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv4.conf.lo.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv6.conf.all.disable_ipv6=0'
+                  - cmd: sysctl -w 'net.ipv4.fib_multipath_hash_policy=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.arp_ignore=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.proxy_arp=1'
+                  - cmd: /usr/lib/frr/frr start
+                  - cmd: >-
+                       vtysh -c  'conf t'
+                       -c 'interface net0' -c 'ipv6 nd ra-interval 3' -c 'no ipv6 nd suppress-ra'
+                       -c 'interface net1' -c 'ipv6 nd ra-interval 3' -c 'no ipv6 nd suppress-ra'
+                       -c '!'
+                       -c 'router bgp 65001'
+                       -c ' bgp router-id 10.1.1.2'
+                       -c ' bgp bestpath as-path multipath-relax'
+                       -c ' neighbor PEER peer-group'
+                       -c ' neighbor PEER remote-as external'
+                       -c ' neighbor net0 interface peer-group PEER'
+                       -c ' neighbor net1 interface peer-group PEER'
+                       -c ' !'
+                       -c ' address-family ipv4 unicast'
+                       -c '  redistribute connected'
+                       -c '  redistribute kernel'
+                       -c ' exit-address-family'
+                       -c '!'
+
+        - name: router2
+          cmds:
+                  - cmd: ip addr add 10.1.2.2/24 dev net0
+                  - cmd: ip addr add 10.1.3.1/24 dev net1
+                  - cmd: sysctl -w 'net.ipv4.ip_forward=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv4.conf.lo.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv6.conf.all.disable_ipv6=0'
+                  - cmd: sysctl -w 'net.ipv4.fib_multipath_hash_policy=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.arp_ignore=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.proxy_arp=1'
+                  - cmd: /usr/lib/frr/frr start
+                  - cmd: >-
+                       vtysh -c  'conf t'
+                       -c 'interface net0' -c 'ipv6 nd ra-interval 3' -c 'no ipv6 nd suppress-ra'
+                       -c 'interface net1' -c 'ipv6 nd ra-interval 3' -c 'no ipv6 nd suppress-ra'
+                       -c '!'
+                       -c 'router bgp 65002'
+                       -c ' bgp router-id 10.1.2.2'
+                       -c ' bgp bestpath as-path multipath-relax'
+                       -c ' neighbor PEER peer-group'
+                       -c ' neighbor PEER remote-as external'
+                       -c ' neighbor net0 interface peer-group PEER'
+                       -c ' neighbor net1 interface peer-group PEER'
+                       -c ' !'
+                       -c ' address-family ipv4 unicast'
+                       -c '  redistribute connected'
+                       -c '  redistribute kernel'
+                       -c ' exit-address-family'
+                       -c '!'
+
+        - name: router3
+          cmds:
+                  - cmd: ip addr add 10.1.3.2/24 dev net0
+                  - cmd: ip addr add 10.2.2.2/24 dev net1
+                  - cmd: sysctl -w 'net.ipv4.ip_forward=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv4.conf.lo.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv6.conf.all.disable_ipv6=0'
+                  - cmd: sysctl -w 'net.ipv4.fib_multipath_hash_policy=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.arp_ignore=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.proxy_arp=1'
+                  - cmd: /usr/lib/frr/frr start
+                  - cmd: >-
+                       vtysh -c  'conf t'
+                       -c 'interface net0' -c 'ipv6 nd ra-interval 3' -c 'no ipv6 nd suppress-ra'
+                       -c 'interface net1' -c 'ipv6 nd ra-interval 3' -c 'no ipv6 nd suppress-ra'
+                       -c '!'
+                       -c 'router bgp 65003'
+                       -c ' bgp router-id 10.1.3.2'
+                       -c ' bgp bestpath as-path multipath-relax'
+                       -c ' neighbor PEER peer-group'
+                       -c ' neighbor PEER remote-as external'
+                       -c ' neighbor net0 interface peer-group PEER'
+                       -c ' neighbor net1 interface peer-group PEER'
+                       -c ' !'
+                       -c ' address-family ipv4 unicast'
+                       -c '  redistribute connected'
+                       -c '  redistribute kernel'
+                       -c ' exit-address-family'
+                       -c '!'
+        - name: hostA
+          cmds:
+                  - cmd: ip addr add 10.1.1.1/24 dev net0
+                  - cmd: ip route add default dev net0
+                  - cmd: sysctl -w 'net.ipv4.ip_forward=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv4.conf.lo.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv6.conf.all.disable_ipv6=0'
+                  - cmd: sysctl -w 'net.ipv4.fib_multipath_hash_policy=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.arp_ignore=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.proxy_arp=1'
+        - name: hostB
+          cmds:
+                  - cmd: ip addr add 10.2.2.1/24 dev net0
+                  - cmd: ip route add default dev net0
+                  - cmd: sysctl -w 'net.ipv4.ip_forward=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv4.conf.lo.rp_filter=0'
+                  - cmd: sysctl -w 'net.ipv6.conf.all.disable_ipv6=0'
+                  - cmd: sysctl -w 'net.ipv4.fib_multipath_hash_policy=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.arp_ignore=1'
+                  - cmd: sysctl -w 'net.ipv4.conf.all.proxy_arp=1'
